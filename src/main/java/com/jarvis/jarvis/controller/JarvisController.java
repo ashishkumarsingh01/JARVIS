@@ -1,5 +1,6 @@
 package com.jarvis.jarvis.controller;
 
+import com.jarvis.jarvis.router.CommandRouter;
 import com.jarvis.jarvis.tools.SystemTools;
 import com.jarvis.jarvis.tools.PhoneTools;
 import com.jarvis.jarvis.tools.WebTools;
@@ -18,17 +19,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class JarvisController {
 
     private final ChatClient chatClient;
+    private final CommandRouter commandRouter;
     private final SystemTools systemTools;
     private final PhoneTools phoneTools;
     private final WebTools webTools;
 
     public JarvisController(
             ChatClient.Builder builder,
+            CommandRouter commandRouter,
             SystemTools systemTools,
             PhoneTools phoneTools,
             WebTools webTools) {
 
         this.chatClient = builder.build();
+        this.commandRouter = commandRouter;
         this.systemTools = systemTools;
         this.phoneTools = phoneTools;
         this.webTools = webTools;
@@ -36,6 +40,20 @@ public class JarvisController {
 
     @GetMapping("/ai")
     public String askJarvis(@RequestParam String message) {
+
+        // =========================
+        // FAST COMMAND ROUTER
+        // =========================
+
+        String fastResponse = commandRouter.route(message);
+
+        if (fastResponse != null) {
+            return fastResponse;
+        }
+
+        // =========================
+        // AI FALLBACK
+        // =========================
 
         return chatClient.prompt()
                 .system("""
